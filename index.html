@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>A.R. Library — Attendance System</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -1446,6 +1449,14 @@ function closeSplash(){
 }
 
 window.addEventListener('DOMContentLoaded',()=>{
+  // Force fresh data - clear all caches on load
+  if ('caches' in window) {
+    caches.keys().then(names => {
+      names.forEach(name => caches.delete(name));
+    });
+  }
+  // Clear sessionStorage to force fresh fetch
+  sessionStorage.clear();
   initSplash();
   setTimeout(closeSplash,8000);
 });
@@ -3428,24 +3439,26 @@ Be concise, friendly and helpful.`;
   }
 
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    // Convert messages for OpenAI format
+    const openaiMessages = [{ role: 'system', content: systemPrompt }, ...apiMessages];
+
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true'
+        'Authorization': 'Bearer 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'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'gpt-4o-mini',
         max_tokens: 1000,
-        system: systemPrompt,
-        messages: apiMessages
+        messages: openaiMessages
       })
     });
 
     const data = await resp.json();
     let answer = '';
-    if (data && data.content) {
-      answer = data.content.map(b => b.type === 'text' ? b.text : '').join('\n').trim();
+    if (data && data.choices && data.choices[0]) {
+      answer = data.choices[0].message.content.trim();
     } else if (data && data.error) {
       answer = '⚠️ ' + data.error.message;
     }
