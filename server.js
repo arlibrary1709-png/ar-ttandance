@@ -198,7 +198,7 @@ app.post('/api/members/:id/forget-password', async (req, res) => {
   try {
     const { name, father_name, phone, new_password } = req.body;
     if (!name || !father_name || !phone || !new_password)
-      return res.status(400).json({ error: 'Name, father's name, mobile number and new password are all required.' });
+      return res.status(400).json({ error: "Name, father's name, mobile number and new password are all required." });
     if (new_password.length < 4)
       return res.status(400).json({ error: 'Password must be at least 4 characters.' });
     const [[member]] = await pool.execute('SELECT * FROM members WHERE id=?', [req.params.id.toUpperCase()]);
@@ -208,7 +208,7 @@ app.post('/api/members/:id/forget-password', async (req, res) => {
     const fatherMatch = member.father_name.toLowerCase().trim() === father_name.toLowerCase().trim();
     const phoneMatch = (member.phone || '').replace(/\s/g,'') === phone.replace(/\s/g,'');
     if (!nameMatch || !fatherMatch || !phoneMatch)
-      return res.status(401).json({ error: 'Details do not match. Please check your name, father's name and mobile number.' });
+      return res.status(401).json({ error: "Details do not match. Please check your name, father's name and mobile number." });
     await pool.execute('UPDATE members SET password=? WHERE id=?', [new_password, req.params.id.toUpperCase()]);
     res.json({ success: true, message: 'Password reset successfully! Ab login karo.' });
   } catch (e) { res.status(500).json({ error: e.message }); }
